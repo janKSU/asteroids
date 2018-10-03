@@ -1,18 +1,23 @@
 import './asteroids.css';
 import Vector from './vector';
+import Sound from './laser_gun.mp3'
 
 //WORLD CONSTANTS
 const WIDTH = 800;
 const HEIGHT = 640;
 
 //BULLET CONSTANTS
-const bulletSpeed = 0.4;
+const bulletSpeed = 8;
 const bulletSize = 8;
 
 //SHIP CONSTANTS
-const shipBulletLimit = 4;
+const shipBulletLimit = 50;
 const shipSize = 25;
 let shipLives = 5;
+const shipMaxSpeed = 0.4;
+const shipBraking = 0.004;
+const shipSpeeding = 0.01;
+const shipRotating = 0.03;
 
 //ASTEROIDS CONSTANTS
 const asteroidValue = 10;
@@ -42,7 +47,8 @@ class Ship extends Object {
         if (this.bullets.length > shipBulletLimit - 1) {
             console.log('Ship cannot shoot more than ' + shipBulletLimit + ' bullets');
         } else {
-            this.bullets.push(new Bullet(this.x + this.w / 3, this.y, bulletSize, bulletSize));
+            audio.play();
+            this.bullets.push(new Bullet(this.x + this.w / 2, this.y + this.h / 2, bulletSize, bulletSize, new Vector(this.orientVector.x, this.orientVector.y)));
         }
 
     }
@@ -51,19 +57,18 @@ class Ship extends Object {
         //console.log("orientVector: " + this.orientVector.x + ' ' + this.orientVector.y);
         //console.log("speedVector: " + this.speedVector.x + ' ' + this.speedVector.y);
         //console.log("ship x: " + this.x + ' y: ' + this.y);
-        if (currentInput.up) {
-            this.speedVector.add(new Vector(this.orientVector.x * 0.01, this.orientVector.y * 0.01));
+        this.speedVector.add(new Vector(-this.speedVector.x*shipBraking, -this.speedVector.y*shipBraking));
+        if (currentInput.up && this.speedVector.magnitude() < shipMaxSpeed) {
+            this.speedVector.add(new Vector(this.orientVector.x * shipSpeeding, this.orientVector.y * shipSpeeding));
         }
-        if (currentInput.down) {
-            this.speedVector.subtract(new Vector(this.orientVector.x * 0.01, this.orientVector.y * 0.01));
+        if (currentInput.down && this.speedVector.magnitude() < shipMaxSpeed) {
+            this.speedVector.subtract(new Vector(this.orientVector.x * shipSpeeding, this.orientVector.y * shipSpeeding));
         }
         if (currentInput.left) {
-            this.orientVector.rotate(-0.03);
-            //this.speedVector.rotate(-0.03);
+            this.orientVector.rotate(-shipRotating);
         }
         if (currentInput.right) {
-            this.orientVector.rotate(0.03);
-            //this.speedVector.rotate(0.03);
+            this.orientVector.rotate(shipRotating);
         }
         ship.x += this.speedVector.x * elapsedTime;
         ship.y += this.speedVector.y * elapsedTime;
@@ -83,12 +88,16 @@ class Ship extends Object {
 
 class Bullet extends Object {
 
-    constructor(x, y, w, h) {
+    constructor(x, y, w, h, orientVector) {
         super(x, y, w, h);
+        this.orientVector = orientVector;
     }
 
-    move() {
-
+    move(elapsedTime) {
+        //console.log("bullet x: " + this.x + ' y: ' + this.y);
+        //console.log("orientVector: " + this.orientVector.x + ' ' + this.orientVector.y);
+        this.x += this.orientVector.x * bulletSpeed;
+        this.y += this.orientVector.y * bulletSpeed;
     }
 }
 
@@ -127,6 +136,7 @@ var gameOver = null;
 var enemies = null;
 var TimeNewEnemy = null;
 var ship = null;
+var audio = new Audio(Sound);
 
 function init() {
     //Game content variables
@@ -220,20 +230,22 @@ function collision(object1, object2) {
 
 //update game state
 function update(elapsedTime) {
-    /*if (currentInput.space && !priorInput.space) {
-        ship.shoot();
-    }*/
+
     ship.move(elapsedTime);
 
-    /*
-        //Moving with bullets from Ship
-        ship.bullets.forEach(function (bullet, index) {
-            bullet.y -= bulletSpeed * elapsedTime;
-            if (bullet.y < 0) {
-                ship.bullets.splice(index, 1);
-            }
-        });
+    if (currentInput.space && !priorInput.space) {
+        ship.shoot();
+    }
 
+
+    //Moving with bullets from Ship
+    ship.bullets.forEach(function (bullet, index) {
+        bullet.move();
+        if (bullet.x < 0 || bullet.x > WIDTH || bullet.y < 0 || bullet.y > HEIGHT) {
+            ship.bullets.splice(index, 1);
+        }
+    });
+    /*
         //Moving with bullets from Enemies
         enemies.forEach(function (enemy) {
             enemy.shoot(elapsedTime);
@@ -319,18 +331,18 @@ function render() {
     canvasctxBuffer.clearRect(0, 0, WIDTH, HEIGHT);
     canvasctxBuffer.fillStyle = '#FF0000';
     canvasctxBuffer.save();
-    canvasctxBuffer.translate(ship.x + ship.w, ship.y + ship.h);
+    canvasctxBuffer.translate(ship.x + ship.w / 2, ship.y + ship.h / 2);
     canvasctxBuffer.rotate(Math.atan(ship.orientVector.y / ship.orientVector.x));
     canvasctxBuffer.fillRect(-ship.w / 2, -ship.h / 2, ship.w, ship.h);
-    canvasctxBuffer.translate(-(ship.x + ship.w), -(ship.y + ship.h));
+    canvasctxBuffer.translate(-(ship.x + ship.w / 2), -(ship.y + ship.h / 2));
     canvasctxBuffer.restore();
 
 
-    /*ship.bullets.forEach(function (bullet) {
+    ship.bullets.forEach(function (bullet) {
         canvasctxBuffer.fillStyle = '#6047FF';
         canvasctxBuffer.fillRect(bullet.x, bullet.y, bullet.w, bullet.h);
     });
-
+    /*
     enemies.forEach(function (enemy) {
         canvasctxBuffer.fillStyle = '#48FF00';
         canvasctxBuffer.fillRect(enemy.x, enemy.y, enemy.w, enemy.h);
