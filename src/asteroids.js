@@ -7,22 +7,22 @@ const WIDTH = 800;
 const HEIGHT = 640;
 
 //BULLET CONSTANTS
-const bulletSpeed = 0.4;
+const bulletSpeed = 10;
 const bulletSize = 8;
 
 //SHIP CONSTANTS
-const shipBulletLimit = 50;
+const shipBulletLimit = 5;
 const shipSize = 25;
 let shipLives = 5;
-const shipMaxSpeed = 0.35;
-const shipBraking = 0.005;
-const shipSpeeding = 0.01;
-const shipRotating = 0.06;
+const shipMaxSpeed = 5;
+const shipBraking = 0.01;
+const shipSpeeding = 0.2;
+const shipRotating = 0.1;
 
 //ASTEROIDS CONSTANTS
 const asteroidValue = 10;
 const asteroidSizeRange = [20, 25, 30];
-const asteroidSpeedRange = [0.1, 0.2, 0.3];
+const asteroidSpeedRange = [0.5, 0.7, 0.8];
 
 class Object {
     constructor(x, y, w, h) {
@@ -55,8 +55,8 @@ class Ship extends Object {
     }
 
     move(elapsedTime) {
-        //console.log("orientVector: " + this.orientVector.x + ' ' + this.orientVector.y);
-        //console.log("speedVector: " + this.speedVector.x + ' ' + this.speedVector.y);
+        console.log("orientVector: " + this.orientVector.x + ' ' + this.orientVector.y);
+        console.log("speedVector: " + this.speedVector.x + ' ' + this.speedVector.y);
         //console.log("ship x: " + this.x + ' y: ' + this.y);
         this.speedVector.add(new Vector(-this.speedVector.x * shipBraking, -this.speedVector.y * shipBraking));
         if (currentInput.up && this.speedVector.magnitude() < shipMaxSpeed) {
@@ -71,8 +71,8 @@ class Ship extends Object {
         if (currentInput.right) {
             this.orientVector.rotate(shipRotating);
         }
-        this.x += this.speedVector.x * elapsedTime;
-        this.y += this.speedVector.y * elapsedTime;
+        this.x += this.speedVector.x;
+        this.y += this.speedVector.y;
 
         //Edge constrains
         if (this.x < -this.w * 1.45) {
@@ -100,8 +100,8 @@ class Bullet extends Object {
         //console.log("bullet x: " + this.x + ' y: ' + this.y);
         //console.log("orientVector: " + this.orientVector.x + ' ' + this.orientVector.y);
 
-        this.x += this.orientVector.x * bulletSpeed * elapsedTime;
-        this.y += this.orientVector.y * bulletSpeed * elapsedTime;
+        this.x += this.orientVector.x * bulletSpeed;
+        this.y += this.orientVector.y * bulletSpeed;
     }
 }
 
@@ -110,14 +110,14 @@ class Asteroid extends Object {
         super(x, y, w, h);
         this.orientVector = new Vector(getRndInteger(-100, 100), getRndInteger(-100, 100)).normalize();
         this.speed = asteroidSpeedRange[getRndInteger(0, asteroidSpeedRange.length - 1)];
-        console.log(this.orientVector);
-        console.log(this.speed);
+        //console.log(this.orientVector);
+        //console.log(this.speed);
     }
 
     move(elapsedTime) {
         //console.log("orientVector: " + this.orientVector.x + ' ' + this.orientVector.y);
-        this.x += this.orientVector.x * this.speed * elapsedTime;
-        this.y += this.orientVector.y * this.speed * elapsedTime;
+        this.x += this.orientVector.x * this.speed;
+        this.y += this.orientVector.y * this.speed;
 
         //Edge constrains
         if (this.x < -this.w * 1.45) {
@@ -336,20 +336,35 @@ function render() {
     canvasctxBuffer.fillStyle = '#FF0000';
     canvasctxBuffer.save();
     canvasctxBuffer.translate(ship.x + ship.w / 2, ship.y + ship.h / 2);
-    canvasctxBuffer.rotate(Math.atan(ship.orientVector.y / ship.orientVector.x));
-    canvasctxBuffer.fillRect(-ship.w / 2, -ship.h / 2, ship.w, ship.h);
+    canvasctxBuffer.rotate(Math.atan2(ship.orientVector.y, ship.orientVector.x));
+    canvasctxBuffer.beginPath();
+    canvasctxBuffer.arc(0,0,ship.w/2,0,2*Math.PI);
+    canvasctxBuffer.fill();
+    canvasctxBuffer.stroke();
+    canvasctxBuffer.beginPath();
+    canvasctxBuffer.moveTo(0,0);
+    canvasctxBuffer.lineWidth=5;
+    canvasctxBuffer.lineTo(7*ship.w/10,0);
+    canvasctxBuffer.stroke();
     canvasctxBuffer.translate(-(ship.x + ship.w / 2), -(ship.y + ship.h / 2));
     canvasctxBuffer.restore();
 
 
     ship.bullets.forEach(function (bullet) {
         canvasctxBuffer.fillStyle = '#6047FF';
-        canvasctxBuffer.fillRect(bullet.x, bullet.y, bullet.w, bullet.h);
+        //canvasctxBuffer.fillRect(bullet.x, bullet.y, bullet.w, bullet.h);
+        canvasctxBuffer.beginPath();
+        canvasctxBuffer.arc(bullet.x,bullet.y,bullet.w/2,0,2*Math.PI);
+        canvasctxBuffer.fill();
+        canvasctxBuffer.stroke();
     });
 
     asteroids.forEach(function (asteroid) {
         canvasctxBuffer.fillStyle = '#48FF00';
-        canvasctxBuffer.fillRect(asteroid.x, asteroid.y, asteroid.w, asteroid.h);
+        canvasctxBuffer.beginPath();
+        canvasctxBuffer.arc(asteroid.x,asteroid.y,asteroid.w,0,2*Math.PI);
+        canvasctxBuffer.fill();
+        canvasctxBuffer.stroke()
     });
     /*
         freeBullets.forEach(function (bullet) {

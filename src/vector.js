@@ -5,13 +5,17 @@ export default class Vector {
     }
 
     add(b) {
-        this.x = this.x + b.x;
-        this.y = this.y + b.y;
+        let orig_x=this.x;
+        let orig_y=this.y;
+        this.x = orig_x + b.x;
+        this.y = orig_y + b.y;
     }
 
     subtract(b) {
-        this.x = this.x - b.x;
-        this.y = this.y - b.y;
+        let orig_x=this.x;
+        let orig_y=this.y;
+        this.x = orig_x - b.x;
+        this.y = orig_y - b.y;
     }
 
     dotProduct(b) {
@@ -31,8 +35,10 @@ export default class Vector {
     }
 
     rotate(angle) {
-        this.x = this.x * Math.cos(angle) - this.y * Math.sin(angle);
-        this.y = this.x * Math.sin(angle) + this.y * Math.cos(angle);
+        let orig_x=this.x;
+        let orig_y=this.y;
+        this.x = orig_x * Math.cos(angle) - orig_y * Math.sin(angle);
+        this.y = orig_x * Math.sin(angle) + orig_y * Math.cos(angle);
     }
 
     perpendicular() {
