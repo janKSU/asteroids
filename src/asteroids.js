@@ -21,9 +21,11 @@ const shipSpeeding = 0.2;
 const shipRotating = 0.1;
 
 //ASTEROIDS CONSTANTS
-const asteroidValue = 10;
-const asteroidRadiusRange = [10, 12, 15];
-const asteroidSpeedRange = [0.5, 0.7, 0.8];
+const asteroidValue = 30;
+const asteroidRadiusRange = [20];
+const asteroidSpeedRange = [0.5, 2, 5];
+const basicAmount = 5;
+const levelMultipl = 1.1;
 
 class Object {
     constructor(x, y, r) {
@@ -49,14 +51,14 @@ class Ship extends Object {
             //console.log('Ship cannot shoot more than ' + shipBulletLimit + ' bullets');
         } else {
             this.bullets.push(new Bullet(this.x, this.y, bulletRadius, new Vector(this.orientVector.x, this.orientVector.y)));
-            laserGunAudio.play();
+            //laserGunAudio.play();
         }
 
     }
 
     move(elapsedTime) {
-        console.log("orientVector: " + this.orientVector.x + ' ' + this.orientVector.y);
-        console.log("speedVector: " + this.speedVector.x + ' ' + this.speedVector.y);
+        //console.log("orientVector: " + this.orientVector.x + ' ' + this.orientVector.y);
+        //console.log("speedVector: " + this.speedVector.x + ' ' + this.speedVector.y);
         //console.log("ship x: " + this.x + ' y: ' + this.y);
         this.speedVector.add(new Vector(-this.speedVector.x * shipBraking, -this.speedVector.y * shipBraking));
         if (currentInput.up && this.speedVector.magnitude() < shipMaxSpeed) {
@@ -75,17 +77,24 @@ class Ship extends Object {
         this.y += this.speedVector.y;
 
         //Edge constrains
-        if (this.x < -this.r) {
+        if (this.x < 0) {
             this.x = WIDTH;
         } else if (this.x > WIDTH) {
-            this.x = -this.r;
+            this.x = 0;
         }
 
-        if (this.y < -this.r) {
+        if (this.y < 0) {
             this.y = HEIGHT;
         } else if (this.y > HEIGHT) {
-            this.y = -this.r;
+            this.y = 0;
         }
+    }
+
+    restart_position() {
+        this.x = WIDTH / 2;
+        this.y = HEIGHT / 2;
+        this.orientVector = new Vector(0, -1);
+        this.speedVector = new Vector(0, 0);
     }
 }
 
@@ -106,10 +115,10 @@ class Bullet extends Object {
 }
 
 class Asteroid extends Object {
-    constructor(x, y, r) {
+    constructor(x, y, r, orientVector) {
         super(x, y, r);
         this.value = asteroidValue;
-        this.orientVector = new Vector(getRndInteger(-100, 100), getRndInteger(-100, 100)).normalize();
+        this.orientVector = orientVector;
         this.speed = asteroidSpeedRange[getRndInteger(0, asteroidSpeedRange.length - 1)];
         //console.log(this.orientVector);
         //console.log(this.speed);
@@ -121,16 +130,36 @@ class Asteroid extends Object {
         this.y += this.orientVector.y * this.speed;
 
         //Edge constrains
-        if (this.x < -this.r) {
+        let edgeMove = false;
+        if (this.x < 0) {
             this.x = WIDTH;
+            edgeMove = true;
         } else if (this.x > WIDTH) {
-            this.x = -this.r;
+            this.x = 0;
+            edgeMove = true;
         }
 
-        if (this.y < -this.r) {
+        if (this.y < 0) {
             this.y = HEIGHT;
+            edgeMove = true;
         } else if (this.y > HEIGHT) {
-            this.y = -this.r;
+            this.y = 0;
+            edgeMove = true;
+        }
+
+        if (edgeMove) {
+            let aster = this;
+            let prev_x = this.x;
+            let prev_y = this.y;
+            asteroids.forEach(function (asteroid) {
+                if (collision(aster, asteroid) && aster !== asteroid) {
+                    bounce(aster, asteroid);
+                    aster.x = prev_x;
+                    aster.y = prev_y;
+                    console.log(aster);
+                    return;
+                }
+            });
         }
     }
 }
@@ -160,15 +189,16 @@ var gameOver = null;
 var asteroids = [];
 var TimeNewEnemy = null;
 var ship = null;
+var levelNumber = 1;
 var laserGunAudio = new Audio(laserGun);
 var laserShipExplode = new Audio(shipExplode);
 
-function new_level(level_number) {
-    for (let i = 0; i < 10 * 1.5 * level_number; i++) {
+function new_level() {
+    for (let i = 0; i < basicAmount * levelMultipl * levelNumber; i++) {
         let x = getRndInteger(0, WIDTH);
         let y = getRndInteger(0, HEIGHT);
         let size = asteroidRadiusRange[getRndInteger(0, asteroidRadiusRange.length - 1)];
-        asteroids.push(new Asteroid(x, y, size));
+        asteroids.push(new Asteroid(x, y, size, new Vector(getRndInteger(-100, 100), getRndInteger(-100, 100)).normalize()));
     }
 }
 
@@ -257,9 +287,39 @@ function collision(o1, o2) {
 
     if (distance < o1.r + o2.r) {
         return true;
-    } else{
+    } else {
         return false;
     }
+}
+
+//Asteroid bounce
+function bounce(a1, a2) {
+    let orientVector1 = new Vector(a1.orientVector.x, a1.orientVector.y);
+    let orientVector2 = new Vector(a2.orientVector.x, a2.orientVector.y);
+    let speed1 = a1.speed;
+    let speed2 = a2.speed;
+
+    a1.orientVector = orientVector2;
+    a2.orientVector = orientVector1;
+    a1.speed = speed2;
+    a2.speed = speed1;
+
+    /*let theta1 = Math.atan2(a1.orientVector.x, a1.orientVector.y);
+    let theta2 = Math.atan2(a2.orientVector.x, a2.orientVector.y);
+    let phi = Math.atan2(a2.y - a1.y, a2.x - a1.x);
+    let m1 = a1.r;
+    let m2 = a2.r;
+    let v1 = a1.speed;
+    let v2 = a2.speed;
+
+    let dx1F = (v1 * Math.cos(theta1 - phi) * (m1-m2) + 2*m2*v2*Math.cos(theta2 - phi)) / (m1+m2) * Math.cos(phi) + v1*Math.sin(theta1-phi) * Math.cos(phi+Math.PI/2);
+    let dy1F = (v1 * Math.cos(theta1 - phi) * (m1-m2) + 2*m2*v2*Math.cos(theta2 - phi)) / (m1+m2) * Math.sin(phi) + v1*Math.sin(theta1-phi) * Math.sin(phi+Math.PI/2);
+    let dx2F = (v2 * Math.cos(theta2 - phi) * (m2-m1) + 2*m1*v1*Math.cos(theta1 - phi)) / (m1+m2) * Math.cos(phi) + v2*Math.sin(theta2-phi) * Math.cos(phi+Math.PI/2);
+    let dy2F = (v2 * Math.cos(theta2 - phi) * (m2-m1) + 2*m1*v1*Math.cos(theta1 - phi)) / (m1+m2) * Math.sin(phi) + v2*Math.sin(theta2-phi) * Math.sin(phi+Math.PI/2);
+    console.log(a1.orientVector);
+    a1.orientVector = new Vector(dx1F, dy1F);
+    a2.orientVector = new Vector(dx2F, dy2F);
+    console.log(a1.orientVector);*/
 }
 
 //update game state
@@ -284,10 +344,17 @@ function update(elapsedTime) {
     //Asteroid movement and colission detection with ship
     asteroids.forEach(function (asteroid, indexAsteroid) {
         asteroid.move(elapsedTime);
-        if(collision(asteroid, ship)){
+        if (collision(asteroid, ship)) {
             laserShipExplode.play();
             ship.lives -= 1;
             asteroids.splice(indexAsteroid, 1);
+            ship.restart_position();
+        } else {
+            asteroids.forEach(function (asteroid2, indexAsteroid2) {
+                if (collision(asteroid, asteroid2) && asteroid != asteroid2) {
+                    bounce(asteroid, asteroid2);
+                }
+            });
         }
     });
 
@@ -295,12 +362,23 @@ function update(elapsedTime) {
     ship.bullets.forEach(function (bullet, indexBullet) {
         asteroids.forEach(function (asteroid, indexAsteroid) {
             if (collision(bullet, asteroid)) {
-                ship.score += asteroid.value;
                 ship.bullets.splice(indexBullet, 1);
+                ship.score += asteroid.value;
                 asteroids.splice(indexAsteroid, 1);
+                let orientVector = new Vector(asteroid.orientVector.x, asteroid.orientVector.y);
+                orientVector.rotate(0.3);
+                asteroids.push(new Asteroid(asteroid.x, asteroid.y, asteroid.r / 2, orientVector));
+                orientVector = new Vector(asteroid.orientVector.x, asteroid.orientVector.y);
+                orientVector.rotate(-0.3);
+                asteroids.push(new Asteroid(asteroid.x, asteroid.y, asteroid.r / 2, orientVector));
             }
         });
     });
+
+    if (asteroids.length == 0) {
+        levelNumber++;
+        new_level();
+    }
 
 
     //Checking for ship lives
