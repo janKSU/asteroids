@@ -249,7 +249,15 @@ window.addEventListener('keyup', handleKeyUp);
 
 //detect colisions of bullet and object
 function collision(o1, o2) {
+    let dx = o1.x - o2.x;
+    let dy = o1.y - o2.y;
+    let distance = Math.sqrt(dx * dx + dy * dy);
 
+    if (distance < o1.r + o2.r) {
+        return true;
+    } else{
+        return false;
+    }
 }
 
 //update game state
@@ -278,11 +286,11 @@ function update(elapsedTime) {
 
     //Detecting collisions between ship bullets and asteroids
     ship.bullets.forEach(function (bullet, indexBullet) {
-        asteroids.forEach(function (enemy, indexEnemy) {
-            if (collision(bullet, enemy)) {
-                ship.score += enemy.value;
+        asteroids.forEach(function (asteroid, indexAsteroid) {
+            if (collision(bullet, asteroid)) {
+                ship.score += asteroid.value;
                 ship.bullets.splice(indexBullet, 1);
-                asteroids.splice(indexEnemy, 1);
+                asteroids.splice(indexAsteroid, 1);
             }
         });
     });
