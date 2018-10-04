@@ -1,6 +1,7 @@
 import './asteroids.css';
 import Vector from './vector';
-import Sound from './laser_gun.mp3'
+import laserGun from './laser_gun.mp3'
+import shipExplode from './ship_explode.mp3'
 
 //WORLD CONSTANTS
 const WIDTH = 800;
@@ -13,7 +14,7 @@ const bulletRadius = 4;
 //SHIP CONSTANTS
 const shipBulletLimit = 5;
 const shipRadius = 15;
-let shipLives = 5;
+let shipLives = 3;
 const shipMaxSpeed = 5;
 const shipBraking = 0.01;
 const shipSpeeding = 0.2;
@@ -47,8 +48,8 @@ class Ship extends Object {
         if (this.bullets.length > shipBulletLimit - 1) {
             //console.log('Ship cannot shoot more than ' + shipBulletLimit + ' bullets');
         } else {
-            this.bullets.push(new Bullet(this.x + this.r, this.y + this.r, bulletRadius, new Vector(this.orientVector.x, this.orientVector.y)));
-            audio.play();
+            this.bullets.push(new Bullet(this.x, this.y, bulletRadius, new Vector(this.orientVector.x, this.orientVector.y)));
+            laserGunAudio.play();
         }
 
     }
@@ -159,7 +160,8 @@ var gameOver = null;
 var asteroids = [];
 var TimeNewEnemy = null;
 var ship = null;
-var audio = new Audio(Sound);
+var laserGunAudio = new Audio(laserGun);
+var laserShipExplode = new Audio(shipExplode);
 
 function new_level(level_number) {
     for (let i = 0; i < 10 * 1.5 * level_number; i++) {
@@ -279,9 +281,14 @@ function update(elapsedTime) {
     });
 
 
-    //Asteroid movement
-    asteroids.forEach(function (asteroid) {
+    //Asteroid movement and colission detection with ship
+    asteroids.forEach(function (asteroid, indexAsteroid) {
         asteroid.move(elapsedTime);
+        if(collision(asteroid, ship)){
+            laserShipExplode.play();
+            ship.lives -= 1;
+            asteroids.splice(indexAsteroid, 1);
+        }
     });
 
     //Detecting collisions between ship bullets and asteroids
@@ -294,33 +301,7 @@ function update(elapsedTime) {
             }
         });
     });
-    /*
-                //Detecting collision between asteroids bullets and sprites
-                asteroids.forEach(function (enemy) {
-                    enemy.bullets.forEach(function (bullet, index) {
-                        if (collision(bullet, ship)) {
-                            ship.lives -= 1;
-                            enemy.bullets.splice(index, 1);
-                        }
-                    });
-                });
 
-                //Detecting collision between free bullets and sprites
-                freeBullets.forEach(function (bullet, index) {
-                    if (collision(bullet, ship)) {
-                        ship.lives -= 1;
-                        freeBullets.splice(index, 1);
-                    }
-                });
-
-                //Creating new asteroids
-                if (TimeNewEnemy > createEnemy) {
-                    asteroids.push(new Asteroid(getRndInteger(0, WIDTH - enemySize), 0 - enemySize));
-                    TimeNewEnemy = 0;
-                    createEnemy = getRndInteger(createEnemyTime[0], createEnemyTime[1]);
-                } else {
-                    TimeNewEnemy += elapsedTime;
-                }*/
 
     //Checking for ship lives
     return ship.lives > 0;
@@ -331,7 +312,7 @@ function render() {
     canvasctxBuffer.clearRect(0, 0, WIDTH, HEIGHT);
     canvasctxBuffer.fillStyle = '#FF0000';
     canvasctxBuffer.save();
-    canvasctxBuffer.translate(ship.x + ship.r, ship.y + ship.r);
+    canvasctxBuffer.translate(ship.x, ship.y);
     canvasctxBuffer.rotate(Math.atan2(ship.orientVector.y, ship.orientVector.x));
     canvasctxBuffer.beginPath();
     canvasctxBuffer.arc(0, 0, ship.r, 0, 2 * Math.PI);
@@ -342,7 +323,7 @@ function render() {
     canvasctxBuffer.lineWidth = 5;
     canvasctxBuffer.lineTo(11 * ship.r / 10, 0);
     canvasctxBuffer.stroke();
-    canvasctxBuffer.translate(-(ship.x + ship.r), -(ship.y + ship.r));
+    canvasctxBuffer.translate(-(ship.x), -(ship.y));
     canvasctxBuffer.restore();
 
 
