@@ -343,10 +343,10 @@ function bounce(a1, a2) {
     a2.x += a2.orientVector.x * a2.speed * 1.5;
     a2.y += a2.orientVector.y * a2.speed * 1.5;*/
 
-    let un = new Vector(a2.orientVector.x - a1.orientVector.x, a2.orientVector.y - a1.orientVector.y);
-    //un = un.normalize();
+    let un = new Vector(a2.x - a1.x, a2.y - a1.y);
+    un = un.normalize();
     let ut = new Vector(-un.y, un.x);
-    //ut = ut.normalize();
+    ut = ut.normalize();
 
     let v1 = new Vector(a1.orientVector.x * a1.speed, a1.orientVector.y * a1.speed);
     let v2 = new Vector(a2.orientVector.x * a2.speed, a2.orientVector.y * a2.speed);
