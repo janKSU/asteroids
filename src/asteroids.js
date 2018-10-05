@@ -23,8 +23,8 @@ const shipRotating = 0.07;
 //ASTEROIDS CONSTANTS
 const asteroidValue = 100;
 const asteroidRadius = 20;
-const asteroidSpeed = 0.2;
-const basicAmount = 3;
+const asteroidSpeed = 0.5;
+const basicAmount = 20;
 const levelMultipl = 1.1;
 
 class Object {
@@ -328,7 +328,7 @@ function collision(o1, o2) {
 
 //Asteroid bounce
 function bounce(a1, a2) {
-    let orientVector1 = new Vector(a1.orientVector.x, a1.orientVector.y);
+    /*let orientVector1 = new Vector(a1.orientVector.x, a1.orientVector.y);
     let orientVector2 = new Vector(a2.orientVector.x, a2.orientVector.y);
     let speed1 = a1.speed;
     let speed2 = a2.speed;
@@ -341,29 +341,40 @@ function bounce(a1, a2) {
     a1.x += a1.orientVector.x * a1.speed * 1.5;
     a1.y += a1.orientVector.y * a1.speed * 1.5;
     a2.x += a2.orientVector.x * a2.speed * 1.5;
-    a2.y += a2.orientVector.y * a2.speed * 1.5;
+    a2.y += a2.orientVector.y * a2.speed * 1.5;*/
+
+    let un = new Vector(a2.orientVector.x - a1.orientVector.x, a2.orientVector.y - a1.orientVector.y);
+    //un = un.normalize();
+    let ut = new Vector(-un.y, un.x);
+    //ut = ut.normalize();
+
+    let v1 = new Vector(a1.orientVector.x * a1.speed, a1.orientVector.y * a1.speed);
+    let v2 = new Vector(a2.orientVector.x * a2.speed, a2.orientVector.y * a2.speed);
+
+    let v1n = un.dotProduct(v1);
+    let v1t = ut.dotProduct(v1);
+    let v2n = un.dotProduct(v2);
+    let v2t = ut.dotProduct(v2);
 
 
-    /*[A] m1v1i + m2v2i = m1v1f + m2v2f
+    let v1tnew = v1t;
+    let v2tnew = v2t;
+    let v1nnew = (v1n * (a1.r - a2.r) + 2 * a2.r * v2n) / (a1.r + a2.r);
+    let v2nnew = (v2n * (a2.r - a1.r) + 2 * a1.r * v1n) / (a1.r + a2.r);
 
-        [B] 1/2 m1(v1i)2 + 1/2 m2(vi)2 = 1/2 m1(v1f)2 + 1/2 m2 (v2f)2*/
+    v1nnew = new Vector(v1nnew * un.x, v1nnew * un.y);
+    v1tnew = new Vector(v1tnew * ut.x, v1tnew * ut.y);
+    v2nnew = new Vector(v2nnew * un.x, v2nnew * un.y);
+    v2tnew = new Vector(v2tnew * ut.x, v2tnew * ut.y);
 
-    /*let theta1 = Math.atan2(a1.orientVector.x, a1.orientVector.y);
-    let theta2 = Math.atan2(a2.orientVector.x, a2.orientVector.y);
-    let phi = Math.atan2(a2.y - a1.y, a2.x - a1.x);
-    let m1 = a1.r;
-    let m2 = a2.r;
-    let v1 = a1.speed;
-    let v2 = a2.speed;
 
-    let dx1F = (v1 * Math.cos(theta1 - phi) * (m1-m2) + 2*m2*v2*Math.cos(theta2 - phi)) / (m1+m2) * Math.cos(phi) + v1*Math.sin(theta1-phi) * Math.cos(phi+Math.PI/2);
-    let dy1F = (v1 * Math.cos(theta1 - phi) * (m1-m2) + 2*m2*v2*Math.cos(theta2 - phi)) / (m1+m2) * Math.sin(phi) + v1*Math.sin(theta1-phi) * Math.sin(phi+Math.PI/2);
-    let dx2F = (v2 * Math.cos(theta2 - phi) * (m2-m1) + 2*m1*v1*Math.cos(theta1 - phi)) / (m1+m2) * Math.cos(phi) + v2*Math.sin(theta2-phi) * Math.cos(phi+Math.PI/2);
-    let dy2F = (v2 * Math.cos(theta2 - phi) * (m2-m1) + 2*m1*v1*Math.cos(theta1 - phi)) / (m1+m2) * Math.sin(phi) + v2*Math.sin(theta2-phi) * Math.sin(phi+Math.PI/2);
-    console.log(a1.orientVector);
-    a1.orientVector = new Vector(dx1F, dy1F);
-    a2.orientVector = new Vector(dx2F, dy2F);
-    console.log(a1.orientVector);*/
+    let v1new = new Vector(v1nnew.x + v1tnew.x, v1nnew.y + v1tnew.y);
+    let v2new = new Vector(v2nnew.x + v2tnew.x, v2nnew.y + v2tnew.y);
+
+    a1.speed = v1new.magnitude();
+    a2.speed = v2new.magnitude();
+    a1.orientVector = v1new.normalize();
+    a2.orientVector = v2new.normalize();
 }
 
 //update game state
@@ -386,11 +397,11 @@ function update(elapsedTime) {
             //Asteroid collision with ship
             asteroids.forEach(function (asteroid, indexAsteroid) {
                 if (collision(asteroid, ship)) {
-                    laserShipExplode.play();
-                    ship.lives -= 1;
-                    ship.lifeCooldown = 3000;
+                    //laserShipExplode.play();
+                    //ship.lives -= 1;
+                    //ship.lifeCooldown = 3000;
                     //asteroids.splice(indexAsteroid, 1);
-                    ship.restart_position();
+                    //ship.restart_position();
                 }
             });
         } else {
@@ -407,9 +418,9 @@ function update(elapsedTime) {
         });
         //Asteroids collision detection with other asteroids
         asteroids.forEach(function (a1) {
-            if (a1.x === NaN || a1.y === NaN){
+            /*if (a1.x === NaN || a1.y === NaN) {
                 asteroids.splice(a1, 1);
-            }
+            }*/
 
             a1.move(elapsedTime);
             asteroids.forEach(function (a2) {
@@ -521,7 +532,7 @@ function render() {
     if (newLevelCountdown > 0) {
         canvasctxBuffer.font = "70px Arial";
         canvasctxBuffer.fillStyle = "#000000";
-        canvasctxBuffer.fillRect(0, 0, WIDTH,HEIGHT);
+        canvasctxBuffer.fillRect(0, 0, WIDTH, HEIGHT);
         canvasctxBuffer.fillStyle = "#FFFFFF";
         canvasctxBuffer.fillText("Level " + levelNumber, WIDTH / 2 - 150, HEIGHT / 2);
         //canvasctxBuffer.fillText("Starts in " + Math.floor(newLevelCountdown), WIDTH / 2 - 150, HEIGHT / 2);
@@ -552,7 +563,7 @@ function gameloop(timestamp) {
         canvasctx.fillStyle = '#FFFFFF';
         canvasctx.font = "40px Arial";
 
-        canvasctx.fillText("Game paused", WIDTH/2-150, HEIGHT / 2);
+        canvasctx.fillText("Game paused", WIDTH / 2 - 150, HEIGHT / 2);
         canvasctx.fillText("Move the ship with arrows", 50, HEIGHT / 2 + 100);
         canvasctx.fillText("Shoot with spacebar", 50, HEIGHT / 2 + 170);
         canvasctx.fillText("Pause/Unpause game with escape", 50, HEIGHT / 2 + 240);

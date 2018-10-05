@@ -5,15 +5,15 @@ export default class Vector {
     }
 
     add(b) {
-        let orig_x=this.x;
-        let orig_y=this.y;
+        let orig_x = this.x;
+        let orig_y = this.y;
         this.x = orig_x + b.x;
         this.y = orig_y + b.y;
     }
 
     subtract(b) {
-        let orig_x=this.x;
-        let orig_y=this.y;
+        let orig_x = this.x;
+        let orig_y = this.y;
         this.x = orig_x - b.x;
         this.y = orig_y - b.y;
     }
@@ -28,24 +28,19 @@ export default class Vector {
 
     normalize() {
         let mag = this.magnitude();
-        return {
-            x: this.x / mag,
-            y: this.y / mag
-        }
+        return new Vector(this.x / mag, this.y / mag);
     }
 
     rotate(angle) {
-        let orig_x=this.x;
-        let orig_y=this.y;
+        let orig_x = this.x;
+        let orig_y = this.y;
         this.x = orig_x * Math.cos(angle) - orig_y * Math.sin(angle);
         this.y = orig_x * Math.sin(angle) + orig_y * Math.cos(angle);
     }
 
     perpendicular() {
-        return {
-            x: -this.y,
-            y: this.x
-        }
+        return new Vector(-this.y, this.x);
+
     }
 }
 
