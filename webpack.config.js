@@ -24,5 +24,6 @@ module.exports = {
     devServer: {
         contentBase: path.resolve(__dirname, "./dist"),
         watchContentBase: true
-    }
+    },
+    devtool: 'cheap-module-eval-source-map'
 };

@@ -21,10 +21,10 @@ const shipSpeeding = 0.2;
 const shipRotating = 0.1;
 
 //ASTEROIDS CONSTANTS
-const asteroidValue = 30;
-const asteroidRadiusRange = [20];
-const asteroidSpeedRange = [0.2, 1, 2];
-const basicAmount = 20;
+const asteroidValue = 100;
+const asteroidRadius = 20;
+const asteroidSpeed = 0.2;
+const basicAmount = 3;
 const levelMultipl = 1.1;
 
 class Object {
@@ -52,6 +52,7 @@ class Ship extends Object {
             //console.log('Ship cannot shoot more than ' + shipBulletLimit + ' bullets');
         } else {
             this.bullets.push(new Bullet(this.x, this.y, bulletRadius, new Vector(this.orientVector.x, this.orientVector.y)));
+            console.log('bullet shot');
             //laserGunAudio.play();
         }
 
@@ -120,7 +121,7 @@ class Asteroid extends Object {
         super(x, y, r);
         this.value = asteroidValue;
         this.orientVector = orientVector;
-        this.speed = asteroidSpeedRange[getRndInteger(0, asteroidSpeedRange.length - 1)];
+        this.speed = asteroidSpeed * getRndInteger(1, levelNumber);
         //console.log(this.orientVector);
         //console.log(this.speed);
     }
@@ -203,7 +204,7 @@ var laserShipExplode = new Audio(shipExplode);
 function new_level() {
     newLevelCountdown = 3000;
     for (let i = 0; i < basicAmount * levelMultipl * levelNumber; i++) {
-        let size = asteroidRadiusRange[getRndInteger(0, asteroidRadiusRange.length - 1)];
+        let size = asteroidRadius;
         let x = getRndInteger(size, WIDTH - size);
         let y = getRndInteger(size, HEIGHT - size);
         let asteroid = new Asteroid(x, y, size, new Vector(getRndInteger(-100, 100), getRndInteger(-100, 100)).normalize());
@@ -329,10 +330,10 @@ function bounce(a1, a2) {
     a1.speed = speed2;
     a2.speed = speed1;
 
-    a1.x += a1.orientVector.x * a1.speed*1.5;
-    a1.y += a1.orientVector.y * a1.speed*1.5;
-    a2.x += a2.orientVector.x * a2.speed*1.5;
-    a2.y += a2.orientVector.y * a2.speed*1.5;
+    a1.x += a1.orientVector.x * a1.speed * 1.5;
+    a1.y += a1.orientVector.y * a1.speed * 1.5;
+    a2.x += a2.orientVector.x * a2.speed * 1.5;
+    a2.y += a2.orientVector.y * a2.speed * 1.5;
 
     /*let theta1 = Math.atan2(a1.orientVector.x, a1.orientVector.y);
     let theta2 = Math.atan2(a2.orientVector.x, a2.orientVector.y);
@@ -360,6 +361,10 @@ function update(elapsedTime) {
         ship.move(elapsedTime);
 
         if (currentInput.space && !priorInput.space) {
+            console.log('prior input' + priorInput.space);
+            console.log('prior input' + currentInput.space);
+
+
             ship.shoot();
         }
 
@@ -400,16 +405,28 @@ function update(elapsedTime) {
         //Detecting collisions between ship bullets and asteroids
         ship.bullets.forEach(function (bullet, indexBullet) {
             asteroids.forEach(function (asteroid, indexAsteroid) {
-                if (collision(bullet, asteroid)) {
-                    ship.bullets.splice(indexBullet, 1);
-                    ship.score += asteroid.value;
-                    asteroids.splice(indexAsteroid, 1);
-                    /*let orientVector = new Vector(asteroid.orientVector.x, asteroid.orientVector.y);
-                    orientVector.rotate(0.3);
-                    asteroids.push(new Asteroid(asteroid.x, asteroid.y, asteroid.r / 2, orientVector));
-                    orientVector = new Vector(asteroid.orientVector.x, asteroid.orientVector.y);
-                    orientVector.rotate(-0.3);
-                    asteroids.push(new Asteroid(asteroid.x, asteroid.y, asteroid.r / 2, orientVector));*/
+
+                if (bullet != null) {
+                    if (collision(bullet, asteroid)) {
+                        ship.bullets.splice(indexBullet, 1);
+                        ship.score += asteroid.value;
+                        asteroids.splice(indexAsteroid, 1);
+                        if (asteroid.r / 2 >= asteroidRadius / levelNumber) {
+                            let orientVector1 = new Vector(asteroid.orientVector.x, asteroid.orientVector.y);
+                            orientVector1.rotate(1.5);
+                            let newAsteroid1 = new Asteroid(asteroid.x + asteroid.r / 2 * orientVector1.x, asteroid.y + +asteroid.r / 2 * orientVector1.y, asteroid.r / 2, orientVector1);
+                            newAsteroid1.move();
+                            asteroids.push(newAsteroid1);
+                            console.log('asteroid');
+                            let orientVector2 = new Vector(asteroid.orientVector.x, asteroid.orientVector.y);
+                            orientVector2.rotate(-1.5);
+                            let newAsteroid2 = new Asteroid(asteroid.x + asteroid.r / 2 * orientVector2.x, asteroid.y + +asteroid.r / 2 * orientVector2.y, asteroid.r / 2, orientVector2);
+                            newAsteroid2.move();
+                            asteroids.push(newAsteroid2);
+                            console.log('asteroid');
+                        }
+                        bullet = null;
+                    }
                 }
             });
         });
