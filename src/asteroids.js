@@ -18,7 +18,7 @@ let shipLives = 3;
 const shipMaxSpeed = 5;
 const shipBraking = 0.01;
 const shipSpeeding = 0.2;
-const shipRotating = 0.1;
+const shipRotating = 0.07;
 
 //ASTEROIDS CONSTANTS
 const asteroidValue = 100;
@@ -200,9 +200,11 @@ var levelNumber = 1;
 var newLevelCountdown = 0;
 var laserGunAudio = new Audio(laserGun);
 var laserShipExplode = new Audio(shipExplode);
+var escKey = false;
 
 function new_level() {
-    newLevelCountdown = 3000;
+    newLevelCountdown = 2000;
+    ship.lifeCooldown = 2000;
     for (let i = 0; i < basicAmount * levelMultipl * levelNumber; i++) {
         let size = asteroidRadius;
         let x = getRndInteger(size, WIDTH - size);
@@ -299,6 +301,12 @@ function handleKeyUp(event) {
         case 'ArrowLeft':
             currentInput.left = false;
             break;
+        case 'Escape':
+            if (escKey) {
+                escKey = false;
+            } else {
+                escKey = true;
+            }
     }
 }
 
@@ -335,6 +343,11 @@ function bounce(a1, a2) {
     a2.x += a2.orientVector.x * a2.speed * 1.5;
     a2.y += a2.orientVector.y * a2.speed * 1.5;
 
+
+    /*[A] m1v1i + m2v2i = m1v1f + m2v2f
+
+        [B] 1/2 m1(v1i)2 + 1/2 m2(vi)2 = 1/2 m1(v1f)2 + 1/2 m2 (v2f)2*/
+
     /*let theta1 = Math.atan2(a1.orientVector.x, a1.orientVector.y);
     let theta2 = Math.atan2(a2.orientVector.x, a2.orientVector.y);
     let phi = Math.atan2(a2.y - a1.y, a2.x - a1.x);
@@ -368,16 +381,16 @@ function update(elapsedTime) {
             ship.shoot();
         }
 
-        //If the ship has just lost lives
+        //If the ship has just lost live so no collision
         if (ship.lifeCooldown < 0) {
             //Asteroid collision with ship
             asteroids.forEach(function (asteroid, indexAsteroid) {
                 if (collision(asteroid, ship)) {
-                    //laserShipExplode.play();
-                    //ship.lives -= 1;
-                    //ship.lifeCooldown = 3000;
+                    laserShipExplode.play();
+                    ship.lives -= 1;
+                    ship.lifeCooldown = 3000;
                     //asteroids.splice(indexAsteroid, 1);
-                    //ship.restart_position();
+                    ship.restart_position();
                 }
             });
         } else {
@@ -394,6 +407,10 @@ function update(elapsedTime) {
         });
         //Asteroids collision detection with other asteroids
         asteroids.forEach(function (a1) {
+            if (a1.x === NaN || a1.y === NaN){
+                asteroids.splice(a1, 1);
+            }
+
             a1.move(elapsedTime);
             asteroids.forEach(function (a2) {
                 if (collision(a1, a2) && a1 != a2) {
@@ -435,13 +452,12 @@ function update(elapsedTime) {
         if (asteroids.length == 0) {
             levelNumber++;
             ship.restart_position();
+            ship.bullets = [];
             new_level();
         }
     } else {
         newLevelCountdown = newLevelCountdown - elapsedTime;
     }
-    //Checking for ship lives
-    return ship.lives > 0;
 }
 
 //render the world
@@ -505,8 +521,10 @@ function render() {
     if (newLevelCountdown > 0) {
         canvasctxBuffer.font = "70px Arial";
         canvasctxBuffer.fillStyle = "#000000";
-        canvasctxBuffer.fillText("Level " + levelNumber, WIDTH / 2 - 150, HEIGHT / 2 - 100);
-        canvasctxBuffer.fillText("Starts in " + Math.floor(newLevelCountdown), WIDTH / 2 - 150, HEIGHT / 2);
+        canvasctxBuffer.fillRect(0, 0, WIDTH,HEIGHT);
+        canvasctxBuffer.fillStyle = "#FFFFFF";
+        canvasctxBuffer.fillText("Level " + levelNumber, WIDTH / 2 - 150, HEIGHT / 2);
+        //canvasctxBuffer.fillText("Starts in " + Math.floor(newLevelCountdown), WIDTH / 2 - 150, HEIGHT / 2);
     }
 }
 
@@ -517,16 +535,34 @@ function gameloop(timestamp) {
     }
     let elapsedTime = timestamp - start;
     start = timestamp;
-    let res = update(elapsedTime);
-    render(elapsedTime);
 
-    // Double buffering
-    canvasctx.fillStyle = '#FFFFFF';
-    canvasctx.fillRect(0, 0, WIDTH, HEIGHT);
-    canvasctx.drawImage(canvasBuffer, 0, 0);
+    //If not pause, update and render
+    if (!escKey) {
+        update(elapsedTime);
+        render(elapsedTime);
+
+
+        // Double buffering
+        canvasctx.fillStyle = '#FFFFFF';
+        canvasctx.fillRect(0, 0, WIDTH, HEIGHT);
+        canvasctx.drawImage(canvasBuffer, 0, 0);
+    } else {
+        canvasctx.fillStyle = '#0e0089';
+        canvasctx.fillRect(0, 0, WIDTH, HEIGHT);
+        canvasctx.fillStyle = '#FFFFFF';
+        canvasctx.font = "40px Arial";
+
+        canvasctx.fillText("Game paused", WIDTH/2-150, HEIGHT / 2);
+        canvasctx.fillText("Move the ship with arrows", 50, HEIGHT / 2 + 100);
+        canvasctx.fillText("Shoot with spacebar", 50, HEIGHT / 2 + 170);
+        canvasctx.fillText("Pause/Unpause game with escape", 50, HEIGHT / 2 + 240);
+
+
+    }
+
 
     priorInput = JSON.parse(JSON.stringify(currentInput));
-    if (res) {
+    if (ship.lives > 0) {
         window.requestAnimationFrame(gameloop);
     } else {
         gameOver = true;
