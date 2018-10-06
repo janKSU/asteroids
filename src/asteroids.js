@@ -5,8 +5,8 @@ import shipExplode from './ship_explode.wav'
 import asteroidBump from './asteroid_bump.wav'
 
 //WORLD CONSTANTS
-const WIDTH = 800;
-const HEIGHT = 640;
+const WIDTH = 1000;
+const HEIGHT = 800;
 
 //BULLET CONSTANTS
 const bulletSpeed = 10;
@@ -23,9 +23,9 @@ const shipRotating = 0.07;
 
 //ASTEROIDS CONSTANTS
 const asteroidValue = 100;
-const asteroidRadius = 20;
+const asteroidRadius = 30;
 const asteroidSpeed = 0.7;
-const basicAmount = 20;
+var basicAmount = 5;
 const levelMultipl = 1.1;
 
 class Object {
@@ -53,7 +53,7 @@ class Ship extends Object {
             //console.log('Ship cannot shoot more than ' + shipBulletLimit + ' bullets');
         } else {
             this.bullets.push(new Bullet(this.x, this.y, bulletRadius, new Vector(this.orientVector.x, this.orientVector.y)));
-            console.log('bullet shot');
+            //console.log('bullet shot');
             audioLaserQueue.pop().play();
             audioLaserQueue.push(new Audio(laserGun));
         }
@@ -123,7 +123,7 @@ class Asteroid extends Object {
         super(x, y, r);
         this.value = asteroidValue;
         this.orientVector = orientVector;
-        this.speed = asteroidSpeed * getRndInteger(1, levelNumber);
+        this.speed = asteroidSpeed + getRndInteger(0, levelNumber * 0.1);
         //console.log(this.orientVector);
         //console.log(this.speed);
     }
@@ -165,7 +165,7 @@ class Asteroid extends Object {
                     bounce(aster, asteroid);
                     aster.x = prev_x;
                     aster.y = prev_y;
-                    console.log(aster);
+                    //console.log(aster);
                     return;
                 }
             });
@@ -204,14 +204,20 @@ var audioExplode = null;
 var audioBump = null;
 var escKey = false;
 var audioLaserQueue = [];
+var warp = false;
+var warpTimer = 0;
+var warpCooldown = 15000;
 
 function new_level() {
     newLevelCountdown = 2000;
     ship.lifeCooldown = 2000;
-    for (let i = 0; i < basicAmount * levelMultipl * levelNumber; i++) {
-        let size = asteroidRadius;
-        let x = getRndInteger(size, WIDTH - size);
-        let y = getRndInteger(size, HEIGHT - size);
+    for (let i = 0; i < basicAmount; i++) {
+        let x = getRndInteger(asteroidRadius, WIDTH - asteroidRadius);
+        let y = getRndInteger(asteroidRadius, HEIGHT - asteroidRadius);
+        let size = asteroidRadius - getRndInteger(1, levelNumber * 3);
+        if (size < 1) {
+            size = 1;
+        }
         let asteroid = new Asteroid(x, y, size, new Vector(getRndInteger(-100, 100), getRndInteger(-100, 100)).normalize());
 
         if (collision(ship, asteroid)) {
@@ -231,6 +237,7 @@ function new_level() {
             i--;
         }
     }
+    basicAmount = basicAmount + 2;
 }
 
 function init() {
@@ -317,6 +324,10 @@ function handleKeyUp(event) {
             } else {
                 escKey = true;
             }
+        case 'w':
+            if (warpCooldown <= 0) {
+                warp = true;
+            }
     }
 }
 
@@ -393,6 +404,16 @@ function bounce(a1, a2) {
 
 }
 
+//Warp ship to random position
+function warpShip() {
+    let x = getRndInteger(shipRadius, WIDTH - shipRadius);
+    let y = getRndInteger(shipRadius, HEIGHT - shipRadius);
+
+    ship.x = x;
+    ship.y = y;
+    ship.lifeCooldown = 2500;
+}
+
 //update game state
 function update(elapsedTime) {
     //If new level starts
@@ -458,20 +479,31 @@ function update(elapsedTime) {
                             let newAsteroid1 = new Asteroid(asteroid.x + asteroid.r / 2 * orientVector1.x, asteroid.y + +asteroid.r / 2 * orientVector1.y, asteroid.r / 2, orientVector1);
                             newAsteroid1.move();
                             asteroids.push(newAsteroid1);
-                            console.log('asteroid');
+                            //console.log('asteroid');
                             let orientVector2 = new Vector(asteroid.orientVector.x, asteroid.orientVector.y);
                             orientVector2.rotate(-1.5);
                             let newAsteroid2 = new Asteroid(asteroid.x + asteroid.r / 2 * orientVector2.x, asteroid.y + +asteroid.r / 2 * orientVector2.y, asteroid.r / 2, orientVector2);
                             newAsteroid2.move();
                             asteroids.push(newAsteroid2);
-                            console.log('asteroid');
+                            //console.log('asteroid');
                         }
                         bullet = null;
                     }
                 }
             });
         });
-        console.log(levelNumber);
+        //console.log(levelNumber);
+
+        if (warp) {
+            warpShip();
+            warp = false;
+            warpCooldown = 15000;
+        } else {
+            warpCooldown = Math.floor(warpCooldown - elapsedTime);
+            if (warpCooldown < 0){
+                warpCooldown = 0;
+            }
+        }
 
         //If the ship has destroyed all asteroids
         if (asteroids.length == 0 && ship.lives != 0) {
@@ -537,6 +569,10 @@ function render() {
     canvasctxBuffer.fillStyle = "#000000";
     canvasctxBuffer.fillText("Score: " + ship.score, 5, 25);
 
+    canvasctxBuffer.font = "20px Arial";
+    canvasctxBuffer.fillStyle = "#000000";
+    canvasctxBuffer.fillText("Warp cooldown: " + warpCooldown, WIDTH / 2 - 70, 25);
+
     //Draw countdown into front of the screen
     if (ship.lifeCooldown > 0 && ship.lives > 0) {
         canvasctxBuffer.font = "30px Arial";
@@ -577,10 +613,13 @@ function gameloop(timestamp) {
         canvasctx.fillStyle = '#FFFFFF';
         canvasctx.font = "40px Arial";
 
-        canvasctx.fillText("Game paused", WIDTH / 2 - 150, HEIGHT / 2);
-        canvasctx.fillText("Move the ship with arrows", 50, HEIGHT / 2 + 100);
-        canvasctx.fillText("Shoot with spacebar", 50, HEIGHT / 2 + 170);
-        canvasctx.fillText("Pause/Unpause game with escape", 50, HEIGHT / 2 + 240);
+        canvasctx.fillText("Game paused", WIDTH / 2 - 10, 50);
+        canvasctx.font = "30px Arial";
+
+        canvasctx.fillText("Arrow Keys: Moves", 50, 100);
+        canvasctx.fillText("Spacebar:    Shoot ", 50, 150);
+        canvasctx.fillText("Escape:       Pause/Unpause game ", 50, 200);
+        canvasctx.fillText("w :                Ship will be warped to random location.", 50, 250);
 
 
     }
