@@ -1,7 +1,8 @@
 import './asteroids.css';
 import Vector from './vector';
-import laserGun from './laser_gun.mp3'
-import shipExplode from './ship_explode.mp3'
+import laserGun from './laser_gun.wav'
+import shipExplode from './ship_explode.wav'
+import asteroidBump from './asteroid_bump.wav'
 
 //WORLD CONSTANTS
 const WIDTH = 800;
@@ -23,7 +24,7 @@ const shipRotating = 0.07;
 //ASTEROIDS CONSTANTS
 const asteroidValue = 100;
 const asteroidRadius = 20;
-const asteroidSpeed = 0.5;
+const asteroidSpeed = 0.7;
 const basicAmount = 20;
 const levelMultipl = 1.1;
 
@@ -53,7 +54,8 @@ class Ship extends Object {
         } else {
             this.bullets.push(new Bullet(this.x, this.y, bulletRadius, new Vector(this.orientVector.x, this.orientVector.y)));
             console.log('bullet shot');
-            //laserGunAudio.play();
+            audioLaserQueue.pop().play();
+            audioLaserQueue.push(new Audio(laserGun));
         }
 
     }
@@ -198,9 +200,10 @@ var TimeNewEnemy = null;
 var ship = null;
 var levelNumber = 1;
 var newLevelCountdown = 0;
-var laserGunAudio = new Audio(laserGun);
-var laserShipExplode = new Audio(shipExplode);
+var audioExplode = null;
+var audioBump = null;
 var escKey = false;
+var audioLaserQueue = [];
 
 function new_level() {
     newLevelCountdown = 2000;
@@ -252,10 +255,17 @@ function init() {
     TimeNewEnemy = 0;
 
     ship = new Ship(WIDTH / 2, HEIGHT / 2, shipRadius, new Vector(0, -1), new Vector(0, 0), shipLives);
+
+    audioExplode = new Audio(shipExplode);
+    audioBump = new Audio(asteroidBump);
+    audioLaserQueue.push(new Audio(laserGun));
+
+    levelNumber = 1;
+    new_level();
+
 }
 
 init();
-new_level(1);
 
 function handleKeyDown(event) {
     switch (event.key) {
@@ -375,6 +385,12 @@ function bounce(a1, a2) {
     a2.speed = v2new.magnitude();
     a1.orientVector = v1new.normalize();
     a2.orientVector = v2new.normalize();
+
+    a1.x += a1.orientVector.x * a1.speed * 1.5;
+    a1.y += a1.orientVector.y * a1.speed * 1.5;
+    a2.x += a2.orientVector.x * a2.speed * 1.5;
+    a2.y += a2.orientVector.y * a2.speed * 1.5;
+
 }
 
 //update game state
@@ -385,10 +401,6 @@ function update(elapsedTime) {
         ship.move(elapsedTime);
 
         if (currentInput.space && !priorInput.space) {
-            console.log('prior input' + priorInput.space);
-            console.log('prior input' + currentInput.space);
-
-
             ship.shoot();
         }
 
@@ -397,11 +409,11 @@ function update(elapsedTime) {
             //Asteroid collision with ship
             asteroids.forEach(function (asteroid, indexAsteroid) {
                 if (collision(asteroid, ship)) {
-                    //laserShipExplode.play();
-                    //ship.lives -= 1;
-                    //ship.lifeCooldown = 3000;
+                    audioExplode.play();
+                    ship.lives -= 1;
+                    ship.lifeCooldown = 3000;
                     //asteroids.splice(indexAsteroid, 1);
-                    //ship.restart_position();
+                    ship.restart_position();
                 }
             });
         } else {
@@ -425,6 +437,7 @@ function update(elapsedTime) {
             a1.move(elapsedTime);
             asteroids.forEach(function (a2) {
                 if (collision(a1, a2) && a1 != a2) {
+                    audioBump.play();
                     bounce(a1, a2);
                 }
             });
@@ -458,9 +471,10 @@ function update(elapsedTime) {
                 }
             });
         });
+        console.log(levelNumber);
 
         //If the ship has destroyed all asteroids
-        if (asteroids.length == 0) {
+        if (asteroids.length == 0 && ship.lives != 0) {
             levelNumber++;
             ship.restart_position();
             ship.bullets = [];
@@ -527,14 +541,14 @@ function render() {
     if (ship.lifeCooldown > 0 && ship.lives > 0) {
         canvasctxBuffer.font = "30px Arial";
         canvasctxBuffer.fillStyle = "#000000";
-        canvasctxBuffer.fillText("Shield: " + Math.floor(ship.lifeCooldown), WIDTH / 2 - 100, HEIGHT / 2 - 100);
+        canvasctxBuffer.fillText("Shield: " + Math.floor(ship.lifeCooldown), WIDTH / 2 - 90, HEIGHT / 2 - 100);
     }
     if (newLevelCountdown > 0) {
         canvasctxBuffer.font = "70px Arial";
         canvasctxBuffer.fillStyle = "#000000";
         canvasctxBuffer.fillRect(0, 0, WIDTH, HEIGHT);
         canvasctxBuffer.fillStyle = "#FFFFFF";
-        canvasctxBuffer.fillText("Level " + levelNumber, WIDTH / 2 - 150, HEIGHT / 2);
+        canvasctxBuffer.fillText("Level " + levelNumber, WIDTH / 2 - 120, HEIGHT / 2);
         //canvasctxBuffer.fillText("Starts in " + Math.floor(newLevelCountdown), WIDTH / 2 - 150, HEIGHT / 2);
     }
 }
