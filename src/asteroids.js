@@ -26,7 +26,6 @@ const asteroidValue = 100;
 const asteroidRadius = 30;
 const asteroidSpeed = 0.7;
 var basicAmount = 5;
-const levelMultipl = 1.1;
 
 class Object {
     constructor(x, y, r) {
@@ -166,7 +165,6 @@ class Asteroid extends Object {
                     aster.x = prev_x;
                     aster.y = prev_y;
                     //console.log(aster);
-                    return;
                 }
             });
         }
@@ -205,7 +203,6 @@ var audioBump = null;
 var escKey = false;
 var audioLaserQueue = [];
 var warp = false;
-var warpTimer = 0;
 var warpCooldown = 15000;
 
 function new_level() {
@@ -341,11 +338,7 @@ function collision(o1, o2) {
     let dy = o1.y - o2.y;
     let distance = Math.sqrt(dx * dx + dy * dy);
 
-    if (distance < o1.r + o2.r) {
-        return true;
-    } else {
-        return false;
-    }
+    return distance < o1.r + o2.r;
 }
 
 //Asteroid bounce
@@ -429,7 +422,7 @@ function update(elapsedTime) {
         //If the ship has just lost live so no collision
         if (ship.lifeCooldown < 0) {
             //Asteroid collision with ship
-            asteroids.forEach(function (asteroid, indexAsteroid) {
+            asteroids.forEach(function (asteroid) {
                 if (collision(asteroid, ship)) {
                     audioExplode.play();
                     ship.lives -= 1;
@@ -458,7 +451,7 @@ function update(elapsedTime) {
 
             a1.move(elapsedTime);
             asteroids.forEach(function (a2) {
-                if (collision(a1, a2) && a1 != a2) {
+                if (collision(a1, a2) && a1 !== a2) {
                     audioBump.play();
                     bounce(a1, a2);
                 }
@@ -507,7 +500,7 @@ function update(elapsedTime) {
         }
 
         //If the ship has destroyed all asteroids
-        if (asteroids.length == 0 && ship.lives != 0) {
+        if (asteroids.length === 0 && ship.lives !== 0) {
             levelNumber++;
             ship.restart_position();
             ship.bullets = [];
