@@ -635,10 +635,10 @@ function gameloop(timestamp) {
     } else {
         gameOver = true;
         ship = null;
-        canvasctx.fillStyle = '#000000';
+        canvasctx.fillStyle = '#FFFFFF';
         canvasctx.font = "50px Arial";
-        canvasctx.fillText("Game Over", WIDTH / 2 - 100, HEIGHT / 2);
-        canvasctx.fillText("Press 'r' for game restart", WIDTH / 2 - 200, HEIGHT / 2 + 70);
+        canvasctx.fillText("Game Over", WIDTH / 2 - 120, HEIGHT / 2);
+        canvasctx.fillText("Press 'r' for game restart", WIDTH / 2 - 250, HEIGHT / 2 + 70);
     }
 }
 
