@@ -522,6 +522,8 @@ function update(elapsedTime) {
 function render() {
 
     canvasctxBuffer.clearRect(0, 0, WIDTH, HEIGHT);
+    canvasctxBuffer.fillStyle = '#000000';
+    canvasctxBuffer.fillRect(0, 0, WIDTH, HEIGHT);
 
     //Change color for restart
     if (ship.lifeCooldown <= 0) {
@@ -563,19 +565,19 @@ function render() {
     });
 
     canvasctxBuffer.font = "20px Arial";
-    canvasctxBuffer.fillStyle = "#000000";
+    canvasctxBuffer.fillStyle = "#FFFFFF";
     canvasctxBuffer.fillText("Level: " + levelNumber, 5, 25);
 
     canvasctxBuffer.font = "20px Arial";
-    canvasctxBuffer.fillStyle = "#000000";
+    canvasctxBuffer.fillStyle = "#FFFFFF";
     canvasctxBuffer.fillText("Score: " + ship.score, WIDTH/2 - 250, 25);
 
     canvasctxBuffer.font = "20px Arial";
-    canvasctxBuffer.fillStyle = "#000000";
+    canvasctxBuffer.fillStyle = "#FFFFFF";
     canvasctxBuffer.fillText("Warp cooldown: " + warpCooldown, WIDTH / 2 + 10, 25);
 
     canvasctxBuffer.font = "20px Arial";
-    canvasctxBuffer.fillStyle = "#000000";
+    canvasctxBuffer.fillStyle = "#FFFFFF";
     canvasctxBuffer.fillText("Lives: " + ship.lives, WIDTH - 90, 25);
 
 
@@ -583,7 +585,7 @@ function render() {
     //Draw countdown into front of the screen
     if (ship.lifeCooldown > 0 && ship.lives > 0) {
         canvasctxBuffer.font = "30px Arial";
-        canvasctxBuffer.fillStyle = "#000000";
+        canvasctxBuffer.fillStyle = "#FFFFFF";
         canvasctxBuffer.fillText("Shield: " + Math.floor(ship.lifeCooldown), WIDTH / 2 - 90, HEIGHT / 2 - 100);
     }
     if (newLevelCountdown > 0) {
