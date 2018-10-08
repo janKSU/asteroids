@@ -210,7 +210,7 @@ var warpCooldown = 15000;
 
 function new_level() {
     newLevelCountdown = 2000;
-    ship.lifeCooldown = 2000;
+    ship.lifeCooldown = 2500;
     for (let i = 0; i < basicAmount; i++) {
         let x = getRndInteger(asteroidRadius, WIDTH - asteroidRadius);
         let y = getRndInteger(asteroidRadius, HEIGHT - asteroidRadius);
@@ -268,6 +268,7 @@ function init() {
     audioLaserQueue.push(new Audio(laserGun));
 
     levelNumber = 1;
+    basicAmount = 5;
     new_level();
 
 }
@@ -563,15 +564,21 @@ function render() {
 
     canvasctxBuffer.font = "20px Arial";
     canvasctxBuffer.fillStyle = "#000000";
+    canvasctxBuffer.fillText("Level: " + levelNumber, 5, 25);
+
+    canvasctxBuffer.font = "20px Arial";
+    canvasctxBuffer.fillStyle = "#000000";
+    canvasctxBuffer.fillText("Score: " + ship.score, WIDTH/2 - 250, 25);
+
+    canvasctxBuffer.font = "20px Arial";
+    canvasctxBuffer.fillStyle = "#000000";
+    canvasctxBuffer.fillText("Warp cooldown: " + warpCooldown, WIDTH / 2 + 10, 25);
+
+    canvasctxBuffer.font = "20px Arial";
+    canvasctxBuffer.fillStyle = "#000000";
     canvasctxBuffer.fillText("Lives: " + ship.lives, WIDTH - 90, 25);
 
-    canvasctxBuffer.font = "20px Arial";
-    canvasctxBuffer.fillStyle = "#000000";
-    canvasctxBuffer.fillText("Score: " + ship.score, 5, 25);
 
-    canvasctxBuffer.font = "20px Arial";
-    canvasctxBuffer.fillStyle = "#000000";
-    canvasctxBuffer.fillText("Warp cooldown: " + warpCooldown, WIDTH / 2 - 70, 25);
 
     //Draw countdown into front of the screen
     if (ship.lifeCooldown > 0 && ship.lives > 0) {
@@ -584,7 +591,7 @@ function render() {
         canvasctxBuffer.fillStyle = "#000000";
         canvasctxBuffer.fillRect(0, 0, WIDTH, HEIGHT);
         canvasctxBuffer.fillStyle = "#FFFFFF";
-        canvasctxBuffer.fillText("Level " + levelNumber, WIDTH / 2 - 120, HEIGHT / 2);
+        canvasctxBuffer.fillText("Level " + levelNumber, WIDTH / 2 - 100, HEIGHT / 2);
         //canvasctxBuffer.fillText("Starts in " + Math.floor(newLevelCountdown), WIDTH / 2 - 150, HEIGHT / 2);
     }
 }
@@ -613,13 +620,15 @@ function gameloop(timestamp) {
         canvasctx.fillStyle = '#FFFFFF';
         canvasctx.font = "40px Arial";
 
-        canvasctx.fillText("Game paused", WIDTH / 2 - 10, 50);
+        canvasctx.fillText("Game paused", WIDTH / 2 - 120, 50);
         canvasctx.font = "30px Arial";
 
-        canvasctx.fillText("Arrow Keys: Moves", 50, 100);
-        canvasctx.fillText("Spacebar:    Shoot ", 50, 150);
-        canvasctx.fillText("Escape:       Pause/Unpause game ", 50, 200);
-        canvasctx.fillText("w :                Ship will be warped to random location.", 50, 250);
+        canvasctx.fillText("UP : Accelerate", 50, 100);
+        canvasctx.fillText("LEFT : Turn left", 50, 150);
+        canvasctx.fillText("RIGHT : Turn right", 50, 200);
+        canvasctx.fillText("SPACEBAR : Shoot ", 50, 250);
+        canvasctx.fillText("ESCAPE : Pause/Unpause game ", 50, 300);
+        canvasctx.fillText("W : Ship will be warped to random location.", 50, 350);
 
 
     }
@@ -632,9 +641,9 @@ function gameloop(timestamp) {
         gameOver = true;
         ship = null;
         canvasctx.fillStyle = '#000000';
-        canvasctx.font = "40px Arial";
-        canvasctx.fillText("Game Over", WIDTH / 2 - WIDTH / 7, HEIGHT / 2);
-        canvasctx.fillText("Press 'r' for game restart", WIDTH / 2 - WIDTH / 4, HEIGHT / 2 + HEIGHT / 7);
+        canvasctx.font = "50px Arial";
+        canvasctx.fillText("Game Over", WIDTH / 2 - 100, HEIGHT / 2);
+        canvasctx.fillText("Press 'r' for game restart", WIDTH / 2 - 200, HEIGHT / 2 + 70);
     }
 }
 
